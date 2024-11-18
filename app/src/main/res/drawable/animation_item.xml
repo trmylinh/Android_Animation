@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:duration="100" android:drawable="@drawable/maswals_01"/>
+    <item android:duration="100" android:drawable="@drawable/maswals_02"/>
+    <item android:duration="100" android:drawable="@drawable/maswals_03"/>
+    <item android:duration="100" android:drawable="@drawable/maswals_04"/>
+    <item android:duration="100" android:drawable="@drawable/maswals_05"/>
+    <item android:duration="100" android:drawable="@drawable/maswals_06"/>
+    <item android:duration="100" android:drawable="@drawable/maswals_07"/>
+    <item android:duration="100" android:drawable="@drawable/maswals_08"/>
+</animation-list>
