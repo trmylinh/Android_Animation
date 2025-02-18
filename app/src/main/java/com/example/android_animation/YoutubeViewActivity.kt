@@ -8,6 +8,8 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.example.android_animation.databinding.ActivityMainBinding
 import com.example.android_animation.databinding.ActivityYoutubeViewBinding
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
 import fr.bmartel.youtubetv.YoutubeTvView
 import fr.bmartel.youtubetv.listener.IPlayerListener
 import fr.bmartel.youtubetv.model.VideoInfo
@@ -25,35 +27,25 @@ class YoutubeViewActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.apply {
-            playButton.setOnClickListener {video1.start() }
-            pauseButton.setOnClickListener { video1.pause() }
-            nextButton.setOnClickListener { video1.nextVideo() }
-            previousButton.setOnClickListener { video1.previousVideo() }
-            backwardButton.setOnClickListener { video1.moveBackward(POSITION_OFFSET) }
-            forwardButton.setOnClickListener { video1.moveForward(POSITION_OFFSET) }
+//            playButton.setOnClickListener {video1.start() }
+//            pauseButton.setOnClickListener { video1.pause() }
+//            nextButton.setOnClickListener { video1.nextVideo() }
+//            previousButton.setOnClickListener { video1.previousVideo() }
+//            backwardButton.setOnClickListener { video1.moveBackward(POSITION_OFFSET) }
+//            forwardButton.setOnClickListener { video1.moveForward(POSITION_OFFSET) }
 
-            video1.playVideo("6pxRHBw-k8M")
+//            video1.playVideo("6pxRHBw-k8M")
 
-            video1.addPlayerListener(object : IPlayerListener {
-                override fun onPlayerReady(videoInfo: VideoInfo) {
-                    Log.i(TAG, "onPlayerReady")
-                }
-
-                override fun onPlayerStateChange(
-                    state: VideoState,
-                    position: Long,
-                    speed: Float,
-                    duration: Float,
-                    videoInfo: VideoInfo
-                ) {
+            video1.addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
+                override fun onReady(youTubePlayer: YouTubePlayer) {
+                    super.onReady(youTubePlayer)
                     Log.i(
                         TAG,
-                        "onPlayerStateChange : $state | position : $position | speed : $speed"
+                        "onReady"
                     )
-
-                    if (state == VideoState.PAUSED || state == VideoState.BUFFERING) {
-                        video1.start()
-                    }
+                    val videoId = "6pxRHBw-k8M"
+                    youTubePlayer.loadVideo(videoId, 0f)
+                    youTubePlayer.removeListener(this)
                 }
             })
         }

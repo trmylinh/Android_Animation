@@ -54,4 +54,6 @@ dependencies {
 
     implementation("com.github.bertrandmartel:youtubetv:1.2")
 
+    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.1")
+
 }
