@@ -32,6 +32,8 @@ class YoutubeViewActivity : AppCompatActivity() {
             backwardButton.setOnClickListener { video1.moveBackward(POSITION_OFFSET) }
             forwardButton.setOnClickListener { video1.moveForward(POSITION_OFFSET) }
 
+            video1.playVideo("6pxRHBw-k8M")
+
             video1.addPlayerListener(object : IPlayerListener {
                 override fun onPlayerReady(videoInfo: VideoInfo) {
                     Log.i(TAG, "onPlayerReady")
@@ -48,6 +50,10 @@ class YoutubeViewActivity : AppCompatActivity() {
                         TAG,
                         "onPlayerStateChange : $state | position : $position | speed : $speed"
                     )
+
+                    if (state == VideoState.PAUSED || state == VideoState.BUFFERING) {
+                        video1.start()
+                    }
                 }
             })
         }
