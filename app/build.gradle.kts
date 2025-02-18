@@ -52,4 +52,6 @@ dependencies {
     // Lottie animation
     implementation (libs.lottie)
 
+    implementation("com.github.bertrandmartel:youtubetv:1.2")
+
 }
