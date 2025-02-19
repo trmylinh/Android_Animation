@@ -1,5 +1,7 @@
 package com.example.android_animation
 
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -9,12 +11,18 @@ import android.widget.ImageView
 import android.widget.SeekBar
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.example.android_animation.databinding.ActivityMainBinding
 import com.example.android_animation.databinding.ActivityYoutubeViewBinding
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.FullscreenListener
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.YouTubePlayerCallback
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFramePlayerOptions
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.utils.loadOrCueVideo
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
 import fr.bmartel.youtubetv.YoutubeTvView
 import fr.bmartel.youtubetv.listener.IPlayerListener
 import fr.bmartel.youtubetv.model.VideoInfo
@@ -24,103 +32,90 @@ import fr.bmartel.youtubetv.model.VideoState
 class YoutubeViewActivity : AppCompatActivity() {
     private lateinit var binding: ActivityYoutubeViewBinding
     private val TAG: String = YoutubeViewActivity::class.java.getSimpleName()
-    private val POSITION_OFFSET: Int = 5
-    private var isPlaying = false
+    private lateinit var youTubePlayer: YouTubePlayer
+    private var isFullScreen = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityYoutubeViewBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.apply {
-            lifecycle.addObserver(video1)
-
-//            val parentView = video1.parent as? ViewGroup
-//            parentView?.removeView(video1)
-//
-//            val customUi = video1.inflateCustomPlayerUi(R.layout.custom_youtube_ui)
-//            video1.setCustomPlayerUi(customUi)
-//
-//            val playPauseButton = customUi.findViewById<ImageView>(R.id.playPauseButton)
-//            val seekBar = customUi.findViewById<SeekBar>(R.id.seekBar)
-
-            video1.addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
-                override fun onReady(youTubePlayer: YouTubePlayer) {
-                    super.onReady(youTubePlayer)
-                    Log.i(
-                        TAG,
-                        "onReady"
-                    )
-                    val videoId = "pZ1NdE69VTs"
-                    youTubePlayer.loadVideo(videoId, 0f)
-
-//                    playPauseButton.setOnClickListener {
-//                        if (isPlaying) {
-//                            youTubePlayer.pause()
-//                        } else {
-//                            youTubePlayer.play()
-//                        }
-//
-//                    }
-
-//                    seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-//                        override fun onProgressChanged(
-//                            seekBar: SeekBar?,
-//                            progress: Int,
-//                            fromUser: Boolean
-//                        ) {
-//                            if (fromUser) {
-//                                youTubePlayer.seekTo(progress.toFloat())
-//                            }
-//                        }
-//
-//                        override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-//
-//                        override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-//                    })
-
-                    youTubePlayer.removeListener(this)
-
-                }
-
-                override fun onStateChange(
-                    youTubePlayer: YouTubePlayer,
-                    state: PlayerConstants.PlayerState
-                ) {
-                    when (state) {
-                        PlayerConstants.PlayerState.PLAYING -> {
-                            Log.d(TAG, "Đang phát")
-//                            isPlaying = true
-//                            updatePlayPauseIcon(playPauseButton, isPlaying)
-                        }
-                        PlayerConstants.PlayerState.PAUSED -> {
-                            Log.d(TAG, "Đã tạm dừng")
-//                            isPlaying = false
-//                            updatePlayPauseIcon(playPauseButton, isPlaying)
-                        }
-                        PlayerConstants.PlayerState.ENDED -> Log.d(TAG, "Đã phát xong")
-                        else -> {}
-                    }
-                }
-            })
-        }
-
         onBackPressedDispatcher.addCallback(this,onBackPressedCallback)
 
+        binding.apply {
+            lifecycle.addObserver(youtubePlayerView)
+
+            youtubePlayerView.addFullscreenListener(object : FullscreenListener {
+                override fun onEnterFullscreen(fullscreenView: View, exitFullscreen: () -> Unit) {
+                    isFullScreen = true
+                    fullScreenContainer.visibility = View.VISIBLE
+                    fullScreenContainer.addView(fullscreenView)
+
+                    // Full Screen remove status bar and navigation bar
+                    WindowInsetsControllerCompat(window!!,findViewById(R.id.rootView)).apply {
+                        hide(WindowInsetsCompat.Type.systemBars())
+                        systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    }
+
+                    if (requestedOrientation != ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE){
+                        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    }
+                }
+
+                override fun onExitFullscreen() {
+                    isFullScreen = false
+                    fullScreenContainer.visibility = View.GONE
+                    fullScreenContainer.removeAllViews()
+
+                    // status bar and navigation bar
+                    WindowInsetsControllerCompat(window!!,findViewById(R.id.rootView)).apply {
+                        show(WindowInsetsCompat.Type.systemBars())
+                    }
+                    if (requestedOrientation != ActivityInfo.SCREEN_ORIENTATION_SENSOR){
+                        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                    }
+
+                }
+            })
+
+            val youtubePlayerListener = object : AbstractYouTubePlayerListener(){
+                override fun onReady(youTubePlayer: YouTubePlayer) {
+                    this@YoutubeViewActivity.youTubePlayer = youTubePlayer
+                    val videoId = "pZ1NdE69VTs"
+                    youTubePlayer.loadOrCueVideo(lifecycle,videoId, 0f)
+                }
+            }
+
+            val iFramePlayerOptions = IFramePlayerOptions.Builder()
+                .controls(1)
+                .fullscreen(1)
+                .build()
+
+            youtubePlayerView.enableAutomaticInitialization = false
+            youtubePlayerView.initialize(youtubePlayerListener,iFramePlayerOptions)
+        }
     }
 
-    private fun updatePlayPauseIcon(button: ImageView, isPlaying: Boolean) {
-        val icon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
-        button.setImageResource(icon)
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            if (!isFullScreen){
+                youTubePlayer.toggleFullscreen()
+            }
+        }else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            if (isFullScreen){
+                youTubePlayer.toggleFullscreen()
+            }
+        }
     }
 
     private val onBackPressedCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
-            //showing dialog and then closing the application..
-            Log.i(
-                TAG,
-                "handleOnBackPressed"
-            )
+            if (isFullScreen){
+                youTubePlayer.toggleFullscreen()
+            }else{
+                finish()
+            }
         }
     }
 }

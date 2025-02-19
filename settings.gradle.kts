@@ -22,4 +22,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Android_Animation"
 include(":app")
- 
